@@ -215,7 +215,7 @@ function generateSVG(stats) {
   </g>
 
   <!-- Divider -->
-  <line x1="30" y1="90" x2="${divX - 20}" y2="115" stroke="#21262d" stroke-width="1" opacity="0">
+  <line x1="30" y1="110" x2="${divX - 20}" y2="110" stroke="#21262d" stroke-width="1" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="250ms" fill="freeze"/>
   </line>
 
