@@ -198,10 +198,6 @@ function generateSVG(stats) {
   <!-- Card background -->
   <rect width="${W}" height="${H}" rx="16" fill="url(#bg)" stroke="#21262d" stroke-width="1"/>
 
-  <!-- Animated top accent bar -->
-  <rect x="0" y="0" width="0" height="3" rx="1" fill="url(#accent)">
-    <animate attributeName="width" from="0" to="${W}" dur="1s" begin="0ms" fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1"/>
-  </rect>
 
   <!-- Vertical divider -->
   <line x1="${divX}" y1="18" x2="${divX}" y2="222" stroke="#21262d" stroke-width="1" opacity="0">
