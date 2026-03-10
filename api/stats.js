@@ -200,7 +200,7 @@ function generateSVG(stats) {
 
 
   <!-- Vertical divider -->
-  <line x1="${divX}" y1="5" x2="${divX}" y2="222" stroke="#21262d" stroke-width="1" opacity="0">
+  <line x1="${divX}" y1="53" x2="${divX}" y2="222" stroke="#21262d" stroke-width="1" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="300ms" fill="freeze"/>
   </line>
 
@@ -235,11 +235,7 @@ function generateSVG(stats) {
     <text y="64" fill="#484f58" font-size="11" font-family="'Segoe UI',Arial,sans-serif">${streakStart} – ${streakEnd}</text>
   </g>
 
-  <!-- Pulsing dot -->
-  <circle cx="${divX - 24}" cy="160" r="5" fill="#a78bfa">
-    <animate attributeName="r" values="4;8;4" dur="2.2s" repeatCount="indefinite" begin="900ms"/>
-    <animate attributeName="opacity" values="1;0.2;1" dur="2.2s" repeatCount="indefinite" begin="900ms"/>
-  </circle>
+
 
   <!-- ── RIGHT: DONUT CHART ── -->
 
