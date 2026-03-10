@@ -4,6 +4,6 @@
   "description": "Animated GitHub Stats Card for README",
   "main": "api/stats.js",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   }
 }
