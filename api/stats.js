@@ -223,8 +223,8 @@ function generateSVG(stats) {
   <g transform="translate(30, 126)" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="350ms" fill="freeze"/>
     <text fill="#a78bfa" font-size="9.5" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1.8" font-weight="700">CURRENT STREAK</text>
-    <text y="50" fill="#f0f6fc" font-size="42" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="url(#glow)">${currentStreak}<tspan font-size="13" fill="#a78bfa" font-weight="500" dx="5">days</tspan></text>
-    <text y="70" fill="#484f58" font-size="11" font-family="'Segoe UI',Arial,sans-serif">${streakStart} → Present</text>
+    <text y="44" fill="#f0f6fc" font-size="42" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="url(#glow)">${currentStreak}<tspan font-size="13" fill="#a78bfa" font-weight="500" dx="5">days</tspan></text>
+    <text y="64" fill="#484f58" font-size="11" font-family="'Segoe UI',Arial,sans-serif">${streakStart} → Present</text>
   </g>
 
   <!-- Longest Streak -->
