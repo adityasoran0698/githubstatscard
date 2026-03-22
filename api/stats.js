@@ -159,15 +159,14 @@ function buildDonutSegments(languages, cx, cy, r, sw) {
 function getTheme(theme) {
   if (theme === "light") {
     return {
-      // Rich magenta → deep indigo gradient background
-     bgFrom:       "#064E3B",   // dark emerald green
-bgTo:         "#022C22",   // deep forest black-green   // near-black indigo
+      bgFrom:       "#4F46E5",   // vivid indigo-blue (top of palette)
+      bgTo:         "#C9BEFF",
 
       // Electric cyan border — vivid pop against the dark card
       border:       "#00E5FF",   // electric cyan
 
       // Divider lines — subtle but visible
-      divider:      "#2D1B69",   // mid indigo
+     divider:      "#7C6FCD",   // mid-purple — visible but soft
 
       // Big numbers — bright white for max punch
       bigNum:       "#FFFFFF",
