@@ -99,16 +99,16 @@ const LANG_COLORS = {
   HTML: "#E34C26",
   CSS: "#7B68EE",
   "C++": "#F34B7D",
-  C: "#888888",
-  Go: "#00ADD8",
+  C:    "#888888",
+  Go:   "#00ADD8",
   Rust: "#DEA584",
   Ruby: "#CC342D",
-  PHP: "#4F5D95",
-  Shell: "#89E051",
-  EJS: "#E4405F",
-  Vue: "#41B883",
-  Kotlin: "#A97BFF",
-  Swift: "#FA7343",
+  PHP:  "#4F5D95",
+  Shell:"#89E051",
+  EJS:  "#E4405F",
+  Vue:  "#41B883",
+  Kotlin:"#A97BFF",
+  Swift:"#FA7343",
   Dart: "#00B4AB",
 };
 const getColor = (name) => LANG_COLORS[name] || "#58A6FF";
@@ -118,16 +118,13 @@ function buildDonutSegments(languages, cx, cy, r, sw) {
   const gapFraction = 0.015;
   const totalGap = gapFraction * languages.length * circumference;
   const usable = circumference - totalGap;
-
   let segments = "";
 
   languages.forEach((lang, i) => {
-    const fraction = lang.percent / 100;
-    const segLen = fraction * usable;
+    const segLen = (lang.percent / 100) * usable;
     const gapLen = gapFraction * circumference;
     const color = getColor(lang.name);
     const delay = 500 + i * 130;
-
     const dasharray = `${segLen} ${circumference - segLen}`;
     const dashoffset =
       circumference * 0.25 -
@@ -136,64 +133,75 @@ function buildDonutSegments(languages, cx, cy, r, sw) {
 
     segments += `<circle
       cx="${cx}" cy="${cy}" r="${r}"
-      fill="none"
-      stroke="${color}"
-      stroke-width="${sw}"
+      fill="none" stroke="${color}" stroke-width="${sw}"
       stroke-linecap="butt"
       stroke-dasharray="0 ${circumference}"
-      stroke-dashoffset="${dashoffset}"
-      opacity="0"
-    >
+      stroke-dashoffset="${dashoffset}" opacity="0">
       <animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="${delay}ms" fill="freeze"/>
       <animate attributeName="stroke-dasharray"
-        from="0 ${circumference}"
-        to="${dasharray}"
+        from="0 ${circumference}" to="${dasharray}"
         dur="1s" begin="${delay}ms" fill="freeze"
         calcMode="spline" keySplines="0.25 0.1 0.25 1"/>
     </circle>`;
   });
-
   return segments;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  THEME DEFINITIONS
+// ─────────────────────────────────────────────────────────────────
+//  THEMES
 //
-//  DARK  = original values, completely unchanged
-//  LIGHT = vibrant, eye-catching gradient palette
-//          bg       : warm white → pale cyan-mint gradient (fresh, modern)
-//          numbers  : deep navy   → strong contrast, very readable
-//          labels   : vivid coral/orange → eye-catching section headers
-//          streak   : hot pink    → bold & energetic
-//          longest  : vivid teal  → striking contrast against pink
-//          dividers : soft sky    → visible but not harsh
-//          donut bg : pale sky    → subtle ring visible on light bg
-//          legend   : dark slate  → crisp readable text
-// ─────────────────────────────────────────────────────────────────────────────
+//  DARK  → original, completely unchanged
+//  LIGHT → deep magenta-to-indigo card (dark card, vivid accents)
+//           Always visible on GitHub light bg since card has its own bg
+//           Accent colors: cyan label, hot orange numbers,
+//           electric pink streak, vivid lime longest streak
+// ─────────────────────────────────────────────────────────────────
 function getTheme(theme) {
   if (theme === "light") {
-  return {
-    bgFrom:       "#0F172A",
-    bgTo:         "#0D2137",
-    border:       "#06B6D4",
-    divider:      "#164E63",
-    bigNum:       "#F0F9FF",
-    accentBlue:   "#FBBF24",
-    accentPurple: "#F472B6",
-    accentGreen:  "#4ADE80",
-    dateText:     "#67E8F9",
-    subtext:      "#475569",
-    titleRight:   "#F0F9FF",
-    centerLabel:  "#67E8F9",
-    centerNum:    "#FBBF24",
-    ringBg:       "#1E3A5F",
-    legendText:   "#E2E8F0",
-    glowFilter:   "url(#glow)",
-  };
-}
+    return {
+      // Rich magenta → deep indigo gradient background
+      bgFrom:       "#4A0072",   // deep magenta-purple
+      bgTo:         "#0D0D2B",   // near-black indigo
+
+      // Electric cyan border — vivid pop against the dark card
+      border:       "#00E5FF",   // electric cyan
+
+      // Divider lines — subtle but visible
+      divider:      "#2D1B69",   // mid indigo
+
+      // Big numbers — bright white for max punch
+      bigNum:       "#FFFFFF",
+
+      // TOTAL CONTRIBUTIONS label — vivid electric cyan
+      accentBlue:   "#00E5FF",   // electric cyan — eye-catching
+
+      // CURRENT STREAK label + "days" — vivid hot orange
+      accentPurple: "#FF6D00",   // deep orange-amber — bold & warm
+
+      // LONGEST STREAK label + "days" — vivid lime green
+      accentGreen:  "#76FF03",   // electric lime — striking
+
+      // Date text — soft cyan so it's readable but not competing
+      dateText:     "#80DEEA",   // cyan-200
+
+      // "since account creation"
+      subtext:      "#9E9E9E",
+
+      // RIGHT SIDE — donut
+      titleRight:   "#FFFFFF",   // bright white title
+      centerLabel:  "#80DEEA",   // soft cyan
+      centerNum:    "#00E5FF",   // electric cyan — vivid focal count
+      ringBg:       "#1A0533",   // very dark purple ring bg
+
+      // Legend text — bright white for readability on dark card
+      legendText:   "#EEEEEE",
+
+      // Keep glow on dark card
+      glowFilter:   "url(#glow)",
+    };
   }
 
-  // ── DARK (original values — DO NOT CHANGE ANYTHING HERE) ──
+  // ── DARK THEME — original values, DO NOT CHANGE ──
   return {
     bgFrom:       "#0d1117",
     bgTo:         "#161b22",
@@ -215,44 +223,31 @@ function getTheme(theme) {
 }
 
 function generateSVG(stats, theme = "dark") {
-  const {
-    totalContributions,
-    currentStreak,
-    longestStreak,
-    streakStart,
-    streakEnd,
-    languages,
-  } = stats;
-
+  const { totalContributions, currentStreak, longestStreak, streakStart, streakEnd, languages } = stats;
   const c = getTheme(theme);
 
-  const W = 860, H = 240;
-  const divX = 450;
+  const W = 860, H = 240, divX = 450;
   const cx = divX + 105, cy = 118, r = 72, sw = 20;
   const segments = buildDonutSegments(languages, cx, cy, r, sw);
 
   const legendX = divX + 198;
-  const legendItems = languages
-    .map((lang, i) => {
-      const y = 42 + i * 27;
-      const delay = 600 + i * 100;
-      return `<g transform="translate(${legendX}, ${y})" opacity="0">
+  const legendItems = languages.map((lang, i) => {
+    const y = 42 + i * 27;
+    const delay = 600 + i * 100;
+    return `<g transform="translate(${legendX}, ${y})" opacity="0">
       <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="${delay}ms" fill="freeze"/>
       <rect x="0" y="0" width="10" height="10" rx="2" fill="${getColor(lang.name)}"/>
-      <text x="15" y="10" fill="${c.legendText}" font-size="11.5" font-family="'Segoe UI',Arial,sans-serif">${lang.name} <tspan fill="${getColor(lang.name)}" font-weight="700">${lang.percent}%</tspan></text>
+      <text x="15" y="10" fill="${c.legendText}" font-size="11.5" font-family="'Segoe UI',Arial,sans-serif">
+        ${lang.name} <tspan fill="${getColor(lang.name)}" font-weight="700">${lang.percent}%</tspan>
+      </text>
     </g>`;
-    })
-    .join("");
+  }).join("");
 
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="${c.bgFrom}"/>
       <stop offset="100%" stop-color="${c.bgTo}"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="${c.accentBlue}"/>
-      <stop offset="100%" stop-color="${c.accentPurple}"/>
     </linearGradient>
     <filter id="glow">
       <feGaussianBlur stdDeviation="2.5" result="blur"/>
@@ -267,8 +262,6 @@ function generateSVG(stats, theme = "dark") {
   <line x1="${divX}" y1="18" x2="${divX}" y2="222" stroke="${c.divider}" stroke-width="1" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="300ms" fill="freeze"/>
   </line>
-
-  <!-- ── LEFT: STATS ── -->
 
   <!-- Total Contributions -->
   <g transform="translate(30, 26)" opacity="0">
@@ -299,9 +292,7 @@ function generateSVG(stats, theme = "dark") {
     <text y="64" fill="${c.dateText}" font-size="11" font-family="'Segoe UI',Arial,sans-serif">${streakStart} – ${streakEnd}</text>
   </g>
 
-  <!-- ── RIGHT: DONUT CHART ── -->
-
-  <!-- Title -->
+  <!-- Donut title -->
   <text x="${divX + 14}" y="28" fill="${c.titleRight}" font-size="13" font-weight="700" font-family="'Segoe UI',Arial,sans-serif" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="450ms" fill="freeze"/>
     Most Used Languages
@@ -312,7 +303,6 @@ function generateSVG(stats, theme = "dark") {
     <animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="480ms" fill="freeze"/>
   </circle>
 
-  <!-- Donut segments -->
   ${segments}
 
   <!-- Center label -->
@@ -325,19 +315,15 @@ function generateSVG(stats, theme = "dark") {
     ${languages.length}
   </text>
 
-  <!-- Legend -->
   ${legendItems}
-
 </svg>`;
 }
 
 module.exports = async (req, res) => {
   const username = process.env.GITHUB_USERNAME || "adityasoran0698";
   const token = process.env.GITHUB_TOKEN;
-
   if (!token) return res.status(500).send("GITHUB_TOKEN not set");
 
-  // Read ?theme=light  →  defaults to dark if not provided
   const theme = req.query.theme === "light" ? "light" : "dark";
 
   try {
@@ -346,12 +332,7 @@ module.exports = async (req, res) => {
         contributionsCollection {
           contributionCalendar {
             totalContributions
-            weeks {
-              contributionDays {
-                contributionCount
-                date
-              }
-            }
+            weeks { contributionDays { contributionCount date } }
           }
         }
       }
@@ -362,22 +343,15 @@ module.exports = async (req, res) => {
       fetchLanguages(username, token),
     ]);
 
-    const contrib =
-      ghData?.data?.user?.contributionsCollection?.contributionCalendar;
+    const contrib = ghData?.data?.user?.contributionsCollection?.contributionCalendar;
     const totalContributions = contrib?.totalContributions || 0;
     const weeks = contrib?.weeks || [];
     const days = weeks
       .flatMap((w) => w.contributionDays)
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    let currentStreak = 0,
-      longestStreak = 0,
-      tempStreak = 0;
-    let streakStart = "",
-      tempStart = "",
-      bestStart = "",
-      bestEnd = "";
-
+    let currentStreak = 0, longestStreak = 0, tempStreak = 0;
+    let streakStart = "", tempStart = "", bestEnd = "";
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -388,7 +362,6 @@ module.exports = async (req, res) => {
         tempStreak++;
         if (tempStreak > longestStreak) {
           longestStreak = tempStreak;
-          bestStart = tempStart;
           bestEnd = d.date;
         }
       } else {
@@ -402,37 +375,26 @@ module.exports = async (req, res) => {
       dDate.setHours(0, 0, 0, 0);
       const diff = Math.floor((today - dDate) / 86400000);
       if (diff > 1) break;
-      if (d.contributionCount > 0) {
-        currentStreak++;
-        streakStart = d.date;
-      } else if (diff === 0) {
-        continue;
-      } else {
-        break;
-      }
+      if (d.contributionCount > 0) { currentStreak++; streakStart = d.date; }
+      else if (diff === 0) continue;
+      else break;
     }
 
     const fmt = (d) => {
       if (!d) return "N/A";
       const [, m, day] = d.split("-");
-      const months = [
-        "Jan","Feb","Mar","Apr","May","Jun",
-        "Jul","Aug","Sep","Oct","Nov","Dec",
-      ];
+      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
       return `${months[parseInt(m) - 1]} ${parseInt(day)}`;
     };
 
-    const svg = generateSVG(
-      {
-        totalContributions,
-        currentStreak,
-        longestStreak,
-        streakStart: fmt(streakStart || days[0]?.date),
-        streakEnd: fmt(bestEnd),
-        languages,
-      },
-      theme   // ← passed here
-    );
+    const svg = generateSVG({
+      totalContributions,
+      currentStreak,
+      longestStreak,
+      streakStart: fmt(streakStart || days[0]?.date),
+      streakEnd: fmt(bestEnd),
+      languages,
+    }, theme);
 
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate");
