@@ -115,13 +115,11 @@ const getColor = (name) => LANG_COLORS[name] || "#58A6FF";
 
 function buildDonutSegments(languages, cx, cy, r, sw) {
   const circumference = 2 * Math.PI * r;
-  const gapFraction = 0.015; // small gap between segments
+  const gapFraction = 0.015;
   const totalGap = gapFraction * languages.length * circumference;
   const usable = circumference - totalGap;
 
   let segments = "";
-  // rotate so first segment starts at top
-  let currentAngle = -Math.PI / 2;
 
   languages.forEach((lang, i) => {
     const fraction = lang.percent / 100;
@@ -130,10 +128,11 @@ function buildDonutSegments(languages, cx, cy, r, sw) {
     const color = getColor(lang.name);
     const delay = 500 + i * 130;
 
-    // dasharray: segLen visible, rest hidden
     const dasharray = `${segLen} ${circumference - segLen}`;
-    // dashoffset: circumference/4 - accumulated
-    const dashoffset = circumference * 0.25 - (usable * (languages.slice(0, i).reduce((s, l) => s + l.percent / 100, 0))) - (gapLen * i);
+    const dashoffset =
+      circumference * 0.25 -
+      usable * languages.slice(0, i).reduce((s, l) => s + l.percent / 100, 0) -
+      gapLen * i;
 
     segments += `<circle
       cx="${cx}" cy="${cy}" r="${r}"
@@ -157,37 +156,124 @@ function buildDonutSegments(languages, cx, cy, r, sw) {
   return segments;
 }
 
-function generateSVG(stats) {
-  const { totalContributions, currentStreak, longestStreak, streakStart, streakEnd, languages } = stats;
+// ─────────────────────────────────────────────────────────────────────────────
+//  THEME DEFINITIONS
+//
+//  DARK  = original values, completely unchanged
+//  LIGHT = vibrant, eye-catching gradient palette
+//          bg       : warm white → pale cyan-mint gradient (fresh, modern)
+//          numbers  : deep navy   → strong contrast, very readable
+//          labels   : vivid coral/orange → eye-catching section headers
+//          streak   : hot pink    → bold & energetic
+//          longest  : vivid teal  → striking contrast against pink
+//          dividers : soft sky    → visible but not harsh
+//          donut bg : pale sky    → subtle ring visible on light bg
+//          legend   : dark slate  → crisp readable text
+// ─────────────────────────────────────────────────────────────────────────────
+function getTheme(theme) {
+  if (theme === "light") {
+    return {
+      // Card background gradient
+      bgFrom:       "#FFFFFF",   // pure white top-left
+      bgTo:         "#E0F2FE",   // sky-100 cyan tint bottom-right → fresh, airy
+
+      // Card border
+      border:       "#38BDF8",   // sky-400 vivid cyan border → stands out
+
+      // Divider lines
+      divider:      "#BAE6FD",   // sky-200 soft but visible
+
+      // Big numbers (221, 2, 4)
+      bigNum:       "#0C4A6E",   // sky-900 very deep navy → max contrast
+
+      // Section labels (TOTAL CONTRIBUTIONS, CURRENT STREAK, LONGEST STREAK)
+      accentBlue:   "#F97316",   // orange-500 vivid → eye-catching contributions label
+      accentPurple: "#EC4899",   // pink-500 hot pink → current streak label pops
+      accentGreen:  "#10B981",   // emerald-500 vivid green → longest streak
+
+      // "days" tspan next to numbers
+      // (reuses accentPurple for current, accentGreen for longest — same as labels)
+
+      // Date text below streaks
+      dateText:     "#0369A1",   // sky-700 readable blue-grey
+
+      // "since account creation" subtext
+      subtext:      "#64748B",   // slate-500
+
+      // RIGHT SIDE — donut chart
+      titleRight:   "#0C4A6E",   // same deep navy → strong heading
+      centerLabel:  "#0369A1",   // sky-700 for "LANGS" text
+      centerNum:    "#F97316",   // orange for the count number — vivid focal point
+      ringBg:       "#BAE6FD",   // sky-200 subtle background ring
+
+      // Legend text
+      legendText:   "#1E293B",   // slate-800 crisp dark text
+
+      // No glow on light bg (glow looks bad on white)
+      glowFilter:   "none",
+    };
+  }
+
+  // ── DARK (original values — DO NOT CHANGE ANYTHING HERE) ──
+  return {
+    bgFrom:       "#0d1117",
+    bgTo:         "#161b22",
+    border:       "#21262d",
+    divider:      "#21262d",
+    bigNum:       "#f0f6fc",
+    accentBlue:   "#58A6FF",
+    accentPurple: "#a78bfa",
+    accentGreen:  "#34d399",
+    dateText:     "#484f58",
+    subtext:      "#484f58",
+    titleRight:   "#f0f6fc",
+    centerLabel:  "#8b949e",
+    centerNum:    "#58A6FF",
+    ringBg:       "#21262d",
+    legendText:   "#c9d1d9",
+    glowFilter:   "url(#glow)",
+  };
+}
+
+function generateSVG(stats, theme = "dark") {
+  const {
+    totalContributions,
+    currentStreak,
+    longestStreak,
+    streakStart,
+    streakEnd,
+    languages,
+  } = stats;
+
+  const c = getTheme(theme);
 
   const W = 860, H = 240;
   const divX = 450;
-
-  // Donut params
   const cx = divX + 105, cy = 118, r = 72, sw = 20;
   const segments = buildDonutSegments(languages, cx, cy, r, sw);
 
-  // Legend: right of donut
   const legendX = divX + 198;
-  const legendItems = languages.map((lang, i) => {
-    const y = 42 + i * 27;
-    const delay = 600 + i * 100;
-    return `<g transform="translate(${legendX}, ${y})" opacity="0">
+  const legendItems = languages
+    .map((lang, i) => {
+      const y = 42 + i * 27;
+      const delay = 600 + i * 100;
+      return `<g transform="translate(${legendX}, ${y})" opacity="0">
       <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="${delay}ms" fill="freeze"/>
       <rect x="0" y="0" width="10" height="10" rx="2" fill="${getColor(lang.name)}"/>
-      <text x="15" y="10" fill="#c9d1d9" font-size="11.5" font-family="'Segoe UI',Arial,sans-serif">${lang.name} <tspan fill="${getColor(lang.name)}" font-weight="700">${lang.percent}%</tspan></text>
+      <text x="15" y="10" fill="${c.legendText}" font-size="11.5" font-family="'Segoe UI',Arial,sans-serif">${lang.name} <tspan fill="${getColor(lang.name)}" font-weight="700">${lang.percent}%</tspan></text>
     </g>`;
-  }).join("");
+    })
+    .join("");
 
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0d1117"/>
-      <stop offset="100%" stop-color="#161b22"/>
+      <stop offset="0%" stop-color="${c.bgFrom}"/>
+      <stop offset="100%" stop-color="${c.bgTo}"/>
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#58A6FF"/>
-      <stop offset="100%" stop-color="#a78bfa"/>
+      <stop offset="0%" stop-color="${c.accentBlue}"/>
+      <stop offset="100%" stop-color="${c.accentPurple}"/>
     </linearGradient>
     <filter id="glow">
       <feGaussianBlur stdDeviation="2.5" result="blur"/>
@@ -196,11 +282,10 @@ function generateSVG(stats) {
   </defs>
 
   <!-- Card background -->
-  <rect width="${W}" height="${H}" rx="16" fill="url(#bg)" stroke="#21262d" stroke-width="1"/>
-
+  <rect width="${W}" height="${H}" rx="16" fill="url(#bg)" stroke="${c.border}" stroke-width="1.5"/>
 
   <!-- Vertical divider -->
-  <line x1="${divX}" y1="18" x2="${divX}" y2="222" stroke="#21262d" stroke-width="1" opacity="0">
+  <line x1="${divX}" y1="18" x2="${divX}" y2="222" stroke="${c.divider}" stroke-width="1" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="300ms" fill="freeze"/>
   </line>
 
@@ -209,44 +294,42 @@ function generateSVG(stats) {
   <!-- Total Contributions -->
   <g transform="translate(30, 26)" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="150ms" fill="freeze"/>
-    <text fill="#58A6FF" font-size="9.5" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1.8" font-weight="700">TOTAL CONTRIBUTIONS</text>
-    <text y="50" fill="#f0f6fc" font-size="48" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="url(#glow)">${totalContributions}</text>
-    <text y="68" fill="#484f58" font-size="11" font-family="'Segoe UI',Arial,sans-serif">since account creation</text>
+    <text fill="${c.accentBlue}" font-size="9.5" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1.8" font-weight="700">TOTAL CONTRIBUTIONS</text>
+    <text y="50" fill="${c.bigNum}" font-size="48" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="${c.glowFilter}">${totalContributions}</text>
+    <text y="68" fill="${c.dateText}" font-size="11" font-family="'Segoe UI',Arial,sans-serif">since account creation</text>
   </g>
 
-  <!-- Divider -->
-  <line x1="30" y1="105" x2="${divX - 20}" y2="105" stroke="#21262d" stroke-width="1" opacity="0">
+  <!-- Horizontal divider -->
+  <line x1="30" y1="105" x2="${divX - 20}" y2="105" stroke="${c.divider}" stroke-width="1" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="250ms" fill="freeze"/>
   </line>
 
   <!-- Current Streak -->
   <g transform="translate(30, 126)" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="350ms" fill="freeze"/>
-    <text fill="#a78bfa" font-size="9.5" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1.8" font-weight="700">CURRENT STREAK</text>
-    <text y="44" fill="#f0f6fc" font-size="42" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="url(#glow)">${currentStreak}<tspan font-size="13" fill="#a78bfa" font-weight="500" dx="5">days</tspan></text>
-    <text y="64" fill="#484f58" font-size="11" font-family="'Segoe UI',Arial,sans-serif">${streakStart} → Present</text>
+    <text fill="${c.accentPurple}" font-size="9.5" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1.8" font-weight="700">CURRENT STREAK</text>
+    <text y="44" fill="${c.bigNum}" font-size="42" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="${c.glowFilter}">${currentStreak}<tspan font-size="13" fill="${c.accentPurple}" font-weight="500" dx="5">days</tspan></text>
+    <text y="64" fill="${c.dateText}" font-size="11" font-family="'Segoe UI',Arial,sans-serif">${streakStart} → Present</text>
   </g>
 
   <!-- Longest Streak -->
   <g transform="translate(235, 126)" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="450ms" fill="freeze"/>
-    <text fill="#34d399" font-size="9.5" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1.8" font-weight="700">LONGEST STREAK</text>
-    <text y="44" fill="#f0f6fc" font-size="42" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="url(#glow)">${longestStreak}<tspan font-size="13" fill="#34d399" font-weight="500" dx="5">days</tspan></text>
-    <text y="64" fill="#484f58" font-size="11" font-family="'Segoe UI',Arial,sans-serif">${streakStart} – ${streakEnd}</text>
+    <text fill="${c.accentGreen}" font-size="9.5" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1.8" font-weight="700">LONGEST STREAK</text>
+    <text y="44" fill="${c.bigNum}" font-size="42" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="${c.glowFilter}">${longestStreak}<tspan font-size="13" fill="${c.accentGreen}" font-weight="500" dx="5">days</tspan></text>
+    <text y="64" fill="${c.dateText}" font-size="11" font-family="'Segoe UI',Arial,sans-serif">${streakStart} – ${streakEnd}</text>
   </g>
-
-
 
   <!-- ── RIGHT: DONUT CHART ── -->
 
   <!-- Title -->
-  <text x="${divX + 14}" y="28" fill="#f0f6fc" font-size="13" font-weight="700" font-family="'Segoe UI',Arial,sans-serif" opacity="0">
+  <text x="${divX + 14}" y="28" fill="${c.titleRight}" font-size="13" font-weight="700" font-family="'Segoe UI',Arial,sans-serif" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="450ms" fill="freeze"/>
     Most Used Languages
   </text>
 
   <!-- Background ring -->
-  <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#21262d" stroke-width="${sw}" opacity="0">
+  <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${c.ringBg}" stroke-width="${sw}" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.3s" begin="480ms" fill="freeze"/>
   </circle>
 
@@ -254,11 +337,11 @@ function generateSVG(stats) {
   ${segments}
 
   <!-- Center label -->
-  <text x="${cx}" y="${cy - 7}" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="700" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1" opacity="0">
+  <text x="${cx}" y="${cy - 7}" text-anchor="middle" fill="${c.centerLabel}" font-size="10" font-weight="700" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1100ms" fill="freeze"/>
     LANGS
   </text>
-  <text x="${cx}" y="${cy + 11}" text-anchor="middle" fill="#58A6FF" font-size="16" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" opacity="0">
+  <text x="${cx}" y="${cy + 11}" text-anchor="middle" fill="${c.centerNum}" font-size="16" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" opacity="0">
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1100ms" fill="freeze"/>
     ${languages.length}
   </text>
@@ -274,6 +357,9 @@ module.exports = async (req, res) => {
   const token = process.env.GITHUB_TOKEN;
 
   if (!token) return res.status(500).send("GITHUB_TOKEN not set");
+
+  // Read ?theme=light  →  defaults to dark if not provided
+  const theme = req.query.theme === "light" ? "light" : "dark";
 
   try {
     const query = `{
@@ -297,15 +383,21 @@ module.exports = async (req, res) => {
       fetchLanguages(username, token),
     ]);
 
-    const contrib = ghData?.data?.user?.contributionsCollection?.contributionCalendar;
+    const contrib =
+      ghData?.data?.user?.contributionsCollection?.contributionCalendar;
     const totalContributions = contrib?.totalContributions || 0;
     const weeks = contrib?.weeks || [];
     const days = weeks
       .flatMap((w) => w.contributionDays)
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    let currentStreak = 0, longestStreak = 0, tempStreak = 0;
-    let streakStart = "", tempStart = "", bestStart = "", bestEnd = "";
+    let currentStreak = 0,
+      longestStreak = 0,
+      tempStreak = 0;
+    let streakStart = "",
+      tempStart = "",
+      bestStart = "",
+      bestEnd = "";
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -344,18 +436,24 @@ module.exports = async (req, res) => {
     const fmt = (d) => {
       if (!d) return "N/A";
       const [, m, day] = d.split("-");
-      const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const months = [
+        "Jan","Feb","Mar","Apr","May","Jun",
+        "Jul","Aug","Sep","Oct","Nov","Dec",
+      ];
       return `${months[parseInt(m) - 1]} ${parseInt(day)}`;
     };
 
-    const svg = generateSVG({
-      totalContributions,
-      currentStreak,
-      longestStreak,
-      streakStart: fmt(streakStart || days[0]?.date),
-      streakEnd: fmt(bestEnd),
-      languages,
-    });
+    const svg = generateSVG(
+      {
+        totalContributions,
+        currentStreak,
+        longestStreak,
+        streakStart: fmt(streakStart || days[0]?.date),
+        streakEnd: fmt(bestEnd),
+        languages,
+      },
+      theme   // ← passed here
+    );
 
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate");
