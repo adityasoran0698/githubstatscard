@@ -160,8 +160,8 @@ function getTheme(theme) {
   if (theme === "light") {
     return {
       // Rich magenta → deep indigo gradient background
-      bgFrom:       "#4A0072",   // deep magenta-purple
-      bgTo:         "#0D0D2B",   // near-black indigo
+     bgFrom:       "#064E3B",   // dark emerald green
+bgTo:         "#022C22",   // deep forest black-green   // near-black indigo
 
       // Electric cyan border — vivid pop against the dark card
       border:       "#00E5FF",   // electric cyan
