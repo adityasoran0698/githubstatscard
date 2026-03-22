@@ -172,46 +172,25 @@ function buildDonutSegments(languages, cx, cy, r, sw) {
 // ─────────────────────────────────────────────────────────────────────────────
 function getTheme(theme) {
   if (theme === "light") {
-    return {
-      // Card background gradient
-      bgFrom:       "#FFFFFF",   // pure white top-left
-      bgTo:         "#E0F2FE",   // sky-100 cyan tint bottom-right → fresh, airy
-
-      // Card border
-      border:       "#38BDF8",   // sky-400 vivid cyan border → stands out
-
-      // Divider lines
-      divider:      "#BAE6FD",   // sky-200 soft but visible
-
-      // Big numbers (221, 2, 4)
-      bigNum:       "#0C4A6E",   // sky-900 very deep navy → max contrast
-
-      // Section labels (TOTAL CONTRIBUTIONS, CURRENT STREAK, LONGEST STREAK)
-      accentBlue:   "#F97316",   // orange-500 vivid → eye-catching contributions label
-      accentPurple: "#EC4899",   // pink-500 hot pink → current streak label pops
-      accentGreen:  "#10B981",   // emerald-500 vivid green → longest streak
-
-      // "days" tspan next to numbers
-      // (reuses accentPurple for current, accentGreen for longest — same as labels)
-
-      // Date text below streaks
-      dateText:     "#0369A1",   // sky-700 readable blue-grey
-
-      // "since account creation" subtext
-      subtext:      "#64748B",   // slate-500
-
-      // RIGHT SIDE — donut chart
-      titleRight:   "#0C4A6E",   // same deep navy → strong heading
-      centerLabel:  "#0369A1",   // sky-700 for "LANGS" text
-      centerNum:    "#F97316",   // orange for the count number — vivid focal point
-      ringBg:       "#BAE6FD",   // sky-200 subtle background ring
-
-      // Legend text
-      legendText:   "#1E293B",   // slate-800 crisp dark text
-
-      // No glow on light bg (glow looks bad on white)
-      glowFilter:   "none",
-    };
+  return {
+    bgFrom:       "#0F172A",
+    bgTo:         "#0D2137",
+    border:       "#06B6D4",
+    divider:      "#164E63",
+    bigNum:       "#F0F9FF",
+    accentBlue:   "#FBBF24",
+    accentPurple: "#F472B6",
+    accentGreen:  "#4ADE80",
+    dateText:     "#67E8F9",
+    subtext:      "#475569",
+    titleRight:   "#F0F9FF",
+    centerLabel:  "#67E8F9",
+    centerNum:    "#FBBF24",
+    ringBg:       "#1E3A5F",
+    legendText:   "#E2E8F0",
+    glowFilter:   "url(#glow)",
+  };
+}
   }
 
   // ── DARK (original values — DO NOT CHANGE ANYTHING HERE) ──
