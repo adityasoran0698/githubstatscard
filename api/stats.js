@@ -159,11 +159,11 @@ function buildDonutSegments(languages, cx, cy, r, sw) {
 function getTheme(theme) {
   if (theme === "light") {
     return {
-      bgFrom:       "#4F46E5",   // vivid indigo-blue (top of palette)
-      bgTo:         "#C9BEFF",
+     bgFrom:       "#1C1C1E",   // rich black
+     bgTo:         "#0A0A0A",   // pure deep black
 
       // Electric cyan border — vivid pop against the dark card
-      border:       "#00E5FF",   // electric cyan
+      border:       "#3A3A3C",   // subtle dark border
 
       // Divider lines — subtle but visible
      divider:      "#7C6FCD",   // mid-purple — visible but soft
