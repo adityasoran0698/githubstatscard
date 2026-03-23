@@ -267,7 +267,7 @@ function generateSVG(stats, theme = "dark") {
     <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="150ms" fill="freeze"/>
     <text fill="${c.accentBlue}" font-size="9.5" font-family="'Segoe UI',Arial,sans-serif" letter-spacing="1.8" font-weight="700">TOTAL CONTRIBUTIONS</text>
     <text y="50" fill="${c.bigNum}" font-size="48" font-weight="800" font-family="'Segoe UI',Arial,sans-serif" filter="${c.glowFilter}">${totalContributions}</text>
-    <text y="68" fill="${c.dateText}" font-size="11" font-family="'Segoe UI',Arial,sans-serif">Since Account Creation!</text>
+    <text y="68" fill="${c.dateText}" font-size="11" font-family="'Segoe UI',Arial,sans-serif" font-weight="500">Since Account Creation!</text>
   </g>
 
   <!-- Horizontal divider -->
