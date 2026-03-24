@@ -120,7 +120,16 @@ async function fetchLanguages(username, token) {
 
 /**
  * Computes current streak and longest streak from sorted contribution days.
- * All date comparisons are done in UTC to avoid timezone-related off-by-one errors.
+ *
+ * Current streak  — the most recent unbroken run of days ending today or
+ *                   yesterday. Resets to 0 the moment a day is skipped.
+ *                   Today is given a free pass when it has 0 contributions
+ *                   (the day may not be over yet).
+ *
+ * Longest streak  — the longest unbroken run across all of history. Never
+ *                   resets; only updated when a new record is set.
+ *
+ * All date arithmetic is done in UTC to avoid timezone off-by-one errors.
  *
  * @param {{ date: string, contributionCount: number }[]} days - ascending order
  * @returns {{ currentStreak, currentStart, longestStreak, longestStart, longestEnd }}
@@ -128,10 +137,10 @@ async function fetchLanguages(username, token) {
 function computeStreaks(days) {
   // ── Longest streak (forward pass) ────────────────────────────
   let longestStreak = 0;
-  let longestStart = "";
-  let longestEnd = "";
-  let tempStreak = 0;
-  let tempStart = "";
+  let longestStart  = "";
+  let longestEnd    = "";
+  let tempStreak    = 0;
+  let tempStart     = "";
 
   for (const day of days) {
     if (day.contributionCount > 0) {
@@ -139,37 +148,67 @@ function computeStreaks(days) {
       tempStreak++;
       if (tempStreak > longestStreak) {
         longestStreak = tempStreak;
-        longestStart = tempStart;
-        longestEnd = day.date;
+        longestStart  = tempStart;
+        longestEnd    = day.date;
       }
     } else {
       tempStreak = 0;
-      tempStart = "";
+      tempStart  = "";
     }
   }
 
   // ── Current streak (backward pass) ───────────────────────────
+  //
+  // `expectedDiff` tracks which day the loop should encounter next as it
+  // walks backwards from today. This correctly detects gaps even when the
+  // raw days array contains zero-contribution entries in the middle.
+  //
+  //   expectedDiff = 0  → we're looking at today
+  //   expectedDiff = 1  → we're looking at yesterday
+  //   expectedDiff = 2  → two days ago … and so on
+  //
+  // If the day we read doesn't match expectedDiff, there's a gap and the
+  // streak is 0.
+
   let currentStreak = 0;
-  let currentStart = "";
+  let currentStart  = "";
 
   const todayUTC = new Date();
   todayUTC.setUTCHours(0, 0, 0, 0);
 
+  let expectedDiff = 0;
+
   for (let i = days.length - 1; i >= 0; i--) {
-    const day = days[i];
-    const dayUTC = new Date(day.date + "T00:00:00Z");
+    const day      = days[i];
+    const dayUTC   = new Date(day.date + "T00:00:00Z");
     const diffDays = Math.round((todayUTC - dayUTC) / 86_400_000);
 
-    if (diffDays > 1) break; // gap larger than yesterday — streak is over
+    // Skip any future-dated entries
+    if (diffDays < 0) continue;
+
+    // Today has no contributions yet — the day may not be over.
+    // Give it a free pass and start counting from yesterday instead.
+    if (diffDays === 0 && day.contributionCount === 0) {
+      expectedDiff = 1;
+      continue;
+    }
+
+    // This day is not the next expected day in sequence → there is a gap.
+    // The current streak is broken; reset and stop.
+    if (diffDays !== expectedDiff) {
+      currentStreak = 0;
+      currentStart  = "";
+      break;
+    }
 
     if (day.contributionCount > 0) {
       currentStreak++;
-      currentStart = day.date; // going backwards, so this ends up as earliest date
-    } else if (diffDays === 0) {
-      // Today has no contributions yet — don't break, check yesterday
-      continue;
+      currentStart = day.date; // walking backwards → ends up as the earliest date
+      expectedDiff++;          // next iteration should be one day further back
     } else {
-      // Yesterday had 0 — streak is broken
+      // This day exists in sequence but has 0 contributions → streak broken.
+      currentStreak = 0;
+      currentStart  = "";
       break;
     }
   }
@@ -258,21 +297,21 @@ const getLangColor = (name) => LANG_COLORS[name] ?? "#58A6FF";
 /** Build animated donut chart segments */
 function buildDonutSegments(languages, cx, cy, r, sw) {
   const circumference = 2 * Math.PI * r;
-  const gapFraction = 0.015;
-  const totalGap = gapFraction * languages.length * circumference;
-  const usable = circumference - totalGap;
+  const gapFraction   = 0.015;
+  const totalGap      = gapFraction * languages.length * circumference;
+  const usable        = circumference - totalGap;
 
   return languages
     .map((lang, i) => {
-      const segLen = (lang.percent / 100) * usable;
-      const gapLen = gapFraction * circumference;
-      const color = getLangColor(lang.name);
-      const delay = 500 + i * 130;
-      const dasharray = `${segLen} ${circumference - segLen}`;
+      const segLen       = (lang.percent / 100) * usable;
+      const gapLen       = gapFraction * circumference;
+      const color        = getLangColor(lang.name);
+      const delay        = 500 + i * 130;
+      const dasharray    = `${segLen} ${circumference - segLen}`;
       const priorPercent = languages
         .slice(0, i)
         .reduce((s, l) => s + l.percent / 100, 0);
-      const dashoffset =
+      const dashoffset   =
         circumference * 0.25 - usable * priorPercent - gapLen * i;
 
       return `<circle
@@ -319,12 +358,11 @@ function generateSVG(stats, themeName = "dark") {
   const W = 860, H = 240, divX = 450;
   const cx = divX + 105, cy = 118, r = 72, sw = 20;
 
-  const segments = buildDonutSegments(languages, cx, cy, r, sw);
-
-  const legendX = divX + 198;
+  const segments    = buildDonutSegments(languages, cx, cy, r, sw);
+  const legendX     = divX + 198;
   const legendItems = languages
     .map((lang, i) => {
-      const y = 42 + i * 27;
+      const y     = 42 + i * 27;
       const delay = 600 + i * 100;
       const color = getLangColor(lang.name);
       return `<g transform="translate(${legendX}, ${y})" opacity="0">
@@ -419,7 +457,7 @@ function generateSVG(stats, themeName = "dark") {
 
 module.exports = async (req, res) => {
   const username = process.env.GITHUB_USERNAME || "adityasoran0698";
-  const token = process.env.GITHUB_TOKEN;
+  const token    = process.env.GITHUB_TOKEN;
 
   if (!token) {
     return res.status(500).send("GITHUB_TOKEN environment variable is not set.");
