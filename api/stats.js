@@ -158,64 +158,46 @@ function computeStreaks(days) {
   }
 
   // ── Current streak (backward pass) ───────────────────────────
-  //
-  // `expectedDiff` tracks which day the loop should encounter next as it
-  // walks backwards from today. This correctly detects gaps even when the
-  // raw days array contains zero-contribution entries in the middle.
-  //
-  //   expectedDiff = 0  → we're looking at today
-  //   expectedDiff = 1  → we're looking at yesterday
-  //   expectedDiff = 2  → two days ago … and so on
-  //
-  // If the day we read doesn't match expectedDiff, there's a gap and the
-  // streak is 0.
-
   let currentStreak = 0;
   let currentStart  = "";
 
   const todayUTC = new Date();
   todayUTC.setUTCHours(0, 0, 0, 0);
 
-  let expectedDiff = 0;
+  // Build a date → count lookup for O(1) access
+  const countByDate = {};
+  for (const day of days) {
+    countByDate[day.date] = day.contributionCount;
+  }
 
-  for (let i = days.length - 1; i >= 0; i--) {
-    const day      = days[i];
-    const dayUTC   = new Date(day.date + "T00:00:00Z");
-    const diffDays = Math.round((todayUTC - dayUTC) / 86_400_000);
+  // Walk backwards from today one calendar day at a time
+  // This is immune to missing entries in the days array
+  const cursor = new Date(todayUTC);
 
-    // Skip any future-dated entries
-    if (diffDays < 0) continue;
+  // If today has no contributions yet, skip it (day may not be over)
+  const todayKey = cursor.toISOString().slice(0, 10);
+  if ((countByDate[todayKey] ?? 0) === 0) {
+    cursor.setUTCDate(cursor.getUTCDate() - 1);
+  }
 
-    // Today has no contributions yet — the day may not be over.
-    // Give it a free pass and start counting from yesterday instead.
-    if (diffDays === 0 && day.contributionCount === 0) {
-      expectedDiff = 1;
-      continue;
-    }
+  while (true) {
+    const key = cursor.toISOString().slice(0, 10);
 
-    // This day is not the next expected day in sequence → there is a gap.
-    // The current streak is broken; reset and stop.
-    if (diffDays !== expectedDiff) {
-      currentStreak = 0;
-      currentStart  = "";
-      break;
-    }
+    // Gone further back than any data we have — stop
+    if (!(key in countByDate)) break;
 
-    if (day.contributionCount > 0) {
+    if (countByDate[key] > 0) {
       currentStreak++;
-      currentStart = day.date; // walking backwards → ends up as the earliest date
-      expectedDiff++;          // next iteration should be one day further back
+      currentStart = key;
+      cursor.setUTCDate(cursor.getUTCDate() - 1);
     } else {
-      // This day exists in sequence but has 0 contributions → streak broken.
-      currentStreak = 0;
-      currentStart  = "";
+      // Hit a day with 0 contributions — streak is broken
       break;
     }
   }
 
   return { currentStreak, currentStart, longestStreak, longestStart, longestEnd };
 }
-
 // ─────────────────────────────────────────────────────────────────
 //  THEME
 // ─────────────────────────────────────────────────────────────────
